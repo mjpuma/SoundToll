@@ -8,6 +8,7 @@ Loads data, filters by year/radii, builds graphs, computes metrics, and produces
 import os
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 # Use non-interactive backend for headless/script execution
@@ -18,8 +19,10 @@ import matplotlib.pyplot as plt
 from data.loader import load_soundtoll
 from filters.filter import filter_data
 from network.analysis import build_graph, compute_metrics, build_graphs_by_period
-from viz.map import plot_map
+from viz.map import plot_map, EXTENT_ZOOMED, EXTENT_WIDE
 from viz.network_plot import plot_network
+from viz.period_comparison import plot_period_comparison
+from viz.port_metrics import build_port_metrics_table, plot_top_ports_comparison
 
 
 def main():
@@ -68,6 +71,8 @@ def main():
         m = compute_metrics(g)
         top_deg = sorted(m["degree_centrality"].items(), key=lambda x: x[1], reverse=True)[:3]
         max_edge = max((g.edges[e].get("weight", 1) for e in g.edges()), default=0)
+        avg_between = np.mean(list(m["betweenness_centrality"].values())) if m["betweenness_centrality"] else 0.0
+        reciprocity = m.get("reciprocity", 0.0)
         period_metrics.append({
             "period": label,
             "n_nodes": m["n_nodes"],
@@ -76,6 +81,8 @@ def main():
             "total_passages": m["total_passages"],
             "pct_passages": 100 * m["total_passages"] / total_all if total_all else 0,
             "max_route_passages": max_edge,
+            "reciprocity": reciprocity,
+            "avg_betweenness": avg_between,
             "top_ports": ", ".join(p[0] for p in top_deg),
         })
         print(f"  {label}: {m['n_nodes']} nodes, {m['n_edges']} edges, density={m['density']:.4f}")
@@ -85,58 +92,59 @@ def main():
     metrics_df.to_csv(metrics_csv, index=False)
     print(f"  Comparison table saved to {metrics_csv}")
 
-    # Period comparison plot
-    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
-    periods_labels = [p["period"] for p in period_metrics]
-    x = range(len(periods_labels))
-
-    axes[0, 0].bar(x, [p["n_nodes"] for p in period_metrics], color=["#2e86ab", "#a23b72"])
-    axes[0, 0].set_xticks(x)
-    axes[0, 0].set_xticklabels(periods_labels)
-    axes[0, 0].set_ylabel("Nodes")
-    axes[0, 0].set_title("Number of ports")
-
-    axes[0, 1].bar(x, [p["n_edges"] for p in period_metrics], color=["#2e86ab", "#a23b72"])
-    axes[0, 1].set_xticks(x)
-    axes[0, 1].set_xticklabels(periods_labels)
-    axes[0, 1].set_ylabel("Edges")
-    axes[0, 1].set_title("Number of routes")
-
-    axes[1, 0].bar(x, [p["total_passages"] for p in period_metrics], color=["#2e86ab", "#a23b72"])
-    axes[1, 0].set_xticks(x)
-    axes[1, 0].set_xticklabels(periods_labels)
-    axes[1, 0].set_ylabel("Passages")
-    axes[1, 0].set_title("Total passages")
-
-    axes[1, 1].bar(x, [p["density"] for p in period_metrics], color=["#2e86ab", "#a23b72"])
-    axes[1, 1].set_xticks(x)
-    axes[1, 1].set_xticklabels(periods_labels)
-    axes[1, 1].set_ylabel("Density")
-    axes[1, 1].set_title("Network density")
-
-    fig.suptitle("Pre-plague (1705–1708) vs Post-plague (1710–1713)", fontsize=12)
-    plt.tight_layout()
-    plt.savefig(outputs_dir / "period_comparison.png", dpi=150, bbox_inches="tight")
-    plt.close()
+    # Professional multipanel period comparison
+    plot_period_comparison(
+        period_metrics,
+        output_path=str(outputs_dir / "period_comparison.png"),
+    )
     print("  Period comparison plot saved to outputs/period_comparison.png")
 
-    # Period-specific maps (cross-period scale for apples-to-apples comparison)
+    # Port-level stats table and bar plots
+    port_df = build_port_metrics_table(graphs)
+    port_df.to_csv(outputs_dir / "port_network_stats.csv", index=False)
+    print(f"  Port stats table saved to outputs/port_network_stats.csv ({len(port_df)} ports)")
+
+    plot_top_ports_comparison(
+        port_df,
+        graphs,
+        top_n=10,
+        output_path=str(outputs_dir / "top_ports_comparison.png"),
+    )
+    print("  Top ports comparison plot saved to outputs/top_ports_comparison.png")
+
+    # Period-specific maps: zoomed-in and zoomed-out (cross-period scale)
     period_graphs = list(graphs.values())
     for label, g in graphs.items():
         plot_map(
             g,
-            output_path=str(outputs_dir / f"soundtoll_map_{label}.png"),
+            output_path=str(outputs_dir / f"soundtoll_map_{label}_zoom.png"),
+            extent=EXTENT_ZOOMED,
             highlight_ports=["Gdansk"],
             title=f"Sound Toll Shipping Network ({label})",
             scale_from_graphs=period_graphs,
         )
-    print("  Period-specific maps saved")
+        plot_map(
+            g,
+            output_path=str(outputs_dir / f"soundtoll_map_{label}_wide.png"),
+            extent=EXTENT_WIDE,
+            highlight_ports=["Gdansk"],
+            title=f"Sound Toll Shipping Network ({label})",
+            scale_from_graphs=period_graphs,
+        )
+    print("  Period-specific maps saved (zoom + wide)")
 
-    # Map (full period)
-    print("Generating map...")
+    # Map (full period): zoomed-in and zoomed-out
+    print("Generating maps...")
     plot_map(
         G,
-        output_path=str(outputs_dir / "soundtoll_map.png"),
+        output_path=str(outputs_dir / "soundtoll_map_zoom.png"),
+        extent=EXTENT_ZOOMED,
+        highlight_ports=["Gdansk"],
+    )
+    plot_map(
+        G,
+        output_path=str(outputs_dir / "soundtoll_map_wide.png"),
+        extent=EXTENT_WIDE,
         highlight_ports=["Gdansk"],
     )
 

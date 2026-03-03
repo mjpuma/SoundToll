@@ -113,6 +113,8 @@ def compute_metrics(G: nx.DiGraph | nx.Graph) -> dict:
     max_edges = n * (n - 1) if is_directed else n * (n - 1) / 2
     density = m / max_edges if max_edges > 0 else 0.0
 
+    reciprocity = nx.reciprocity(G) if is_directed and m > 0 else 0.0
+
     return {
         "density": density,
         "n_nodes": n,
@@ -121,6 +123,7 @@ def compute_metrics(G: nx.DiGraph | nx.Graph) -> dict:
         "degree_centrality": degree_cent,
         "betweenness_centrality": betweenness,
         "clustering": clustering,
+        "reciprocity": reciprocity,
     }
 
 
