@@ -46,6 +46,7 @@ def plot_map(
     edge_width_scale: float = 0.35,
     geodesic_edges: bool = True,
     highlight_ports: list[str] | None = None,
+    stable_ports: list[str] | None = None,
     label_ports: int | list[str] | None = 40,
     scale_from_graphs: list | None = None,
     show_scale: bool = True,
@@ -79,6 +80,8 @@ def plot_map(
         lines in projection (cleaner when zoomed out, less geographically accurate).
     highlight_ports : list[str] | None
         Port names to highlight (e.g. ["Gdansk"]).
+    stable_ports : list[str] | None
+        Ports stable across time (marked with green square outline).
     label_ports : int | list[str] | None
         If int: label top N ports by passages. If list: label these ports.
         If None: no labels except highlighted. Default 15.
@@ -119,6 +122,7 @@ def plot_map(
                 pos[n] = (lon, lat)
 
     highlight = set(highlight_ports or [])
+    stable = set(stable_ports or [])
 
     # Passages per node (total flow through port) for size scaling
     node_passages = {n: 0 for n in G.nodes()}
@@ -174,6 +178,7 @@ def plot_map(
     # Nodes: size proportional to passages, white outline for visibility over water
     for n, (lon, lat) in pos.items():
         is_highlight = n in highlight
+        is_stable = n in stable
         color = "#c53030" if is_highlight else "#2d3748"
         size = _node_size(n) * node_size_scale
         size = size * 1.2 if is_highlight else size
@@ -186,7 +191,18 @@ def plot_map(
             transform=ccrs.PlateCarree(),
             zorder=5,
         )
-        if is_highlight or n in to_label:
+        # Stable ports: green square outline (ports consistent across time)
+        if is_stable:
+            ax.plot(
+                lon, lat, "s",
+                markersize=size * 0.7,
+                fillstyle="none",
+                markeredgecolor="#2d7d32",
+                markeredgewidth=2,
+                transform=ccrs.PlateCarree(),
+                zorder=6,
+            )
+        if is_highlight or is_stable or n in to_label:
             txt = ax.text(
                 lon, lat, f"  {n}",
                 fontsize=10 if not is_highlight else 11,
@@ -243,6 +259,12 @@ def plot_map(
             legend_ax.plot([0.55, 0.92], [0.5 - i * 0.28, 0.5 - i * 0.28], color="#2c5282", lw=lw, alpha=0.9, solid_capstyle="round", transform=legend_ax.transAxes)
             legend_ax.text(0.94, 0.5 - i * 0.28, f"{val:,}", fontsize=10, va="center", ha="left", transform=legend_ax.transAxes)
         legend_ax.text(0.73, 0.78, "Route traffic", fontsize=11, fontweight="bold", ha="center", transform=legend_ax.transAxes)
+
+        # Stable ports legend (when used)
+        if stable:
+            legend_ax.scatter(0.2, 0.08, s=80, marker="s", facecolors="none", edgecolors="#2d7d32",
+                             linewidths=2, transform=legend_ax.transAxes)
+            legend_ax.text(0.32, 0.08, "Stable port", fontsize=9, va="center", transform=legend_ax.transAxes)
 
     plt.tight_layout()
 

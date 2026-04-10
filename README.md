@@ -17,9 +17,34 @@ The analysis uses `2602_soundtoll_with_radii.csv` (~300+ MB), which includes:
 - **Time**: Year (1565–1857), Season_Num
 - **Context**: plague indicators, climate variables, regions
 
-The data file is not on GitHub due to size; place it in the project root locally.
+The CSV is **not** in this repository (too large for GitHub). Anyone running the pipeline should place **`2602_soundtoll_with_radii.csv` in the project root** (the same folder as `main.py`).
 
-## Setup
+### Collaborator quick start
+
+1. **Clone** the repo: `git clone https://github.com/mjpuma/SoundToll.git` and `cd SoundToll`.
+2. **Python**: 3.10 or newer is recommended.
+3. **Environment** (recommended):
+
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate   # Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+   If `cartopy` fails to install via pip on your machine, install it from [conda-forge](https://scitools.org.uk/cartopy/docs/latest/installing.html) or use a conda env with `cartopy` and then `pip install` the rest of `requirements.txt`.
+
+4. **Data**: copy your existing `2602_soundtoll_with_radii.csv` into the project root (next to `main.py`).
+5. **Run**:
+
+   ```bash
+   python main.py
+   ```
+
+   Figures and CSV summaries are written under `outputs/` (ignored by git). The full run builds many assets, including year-by-year maps; expect it to take noticeable time on first execution.
+
+**Optional — commodity-by-commodity analysis** (`python main.py --commodity` or `--commodity-only`): requires additional STRO files (e.g. `data/ladingen.csv` or `data/cargoes_regs.csv`) and, for full matching, `Fixed Port City & Cargo Mappings.xlsx` in the project root. If those are missing, the main network pipeline still runs; commodity steps are skipped or partially skipped with a console message.
+
+## Setup (minimal)
 
 ```bash
 pip install -r requirements.txt
@@ -30,6 +55,8 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+
+Optional flags: `--commodity`, `--commodity-only`, `--force` (see `main.py` docstring).
 
 ## Outputs
 
@@ -117,13 +144,19 @@ plot_map(graphs["1710-1713"], output_path="post.png", extent=EXTENT_ZOOMED,
 
 ```
 SoundToll/
-├── data/loader.py           # Load CSV with selected columns
+├── data/
+│   ├── loader.py            # Load CSV with selected columns
+│   ├── regression_panel.py  # Regression-ready panels
+│   └── …                    # Cargo/commodity helpers (optional)
 ├── filters/filter.py        # Year, radii, region filters
-├── network/analysis.py      # Graph build, centrality, reciprocity
-├── viz/map.py               # Cartopy map (Lambert Conformal, geodesic paths)
-├── viz/network_plot.py      # Abstract network diagrams
-├── viz/period_comparison.py # Multipanel before/after stats
-├── viz/port_metrics.py      # Port-level table and bar plots
+├── network/analysis.py      # Graph build, centrality, reciprocity, backbone
+├── viz/
+│   ├── map.py               # Cartopy map (Lambert Conformal, geodesic paths)
+│   ├── network_plot.py      # Abstract network diagrams
+│   ├── period_comparison.py # Multipanel before/after stats
+│   ├── port_metrics.py      # Port-level table and bar plots
+│   ├── port_timeseries.py   # Port importance over time
+│   └── regression_plots.py  # Regression visualization
 ├── main.py                  # Orchestration script
 ├── OUTPUTS.md               # Extended captions
 └── outputs/                 # Figures and tables (generated)

@@ -20,6 +20,7 @@ def plot_period_comparison(
     period_metrics: list[dict],
     output_path: str | None = None,
     figsize: tuple[float, float] = (14, 10),
+    suptitle: str | None = None,
 ) -> None:
     """
     Create a professional multipanel figure comparing network stats across periods.
@@ -154,7 +155,8 @@ def plot_period_comparison(
     ]
     fig.legend(handles=legend_patches, loc="upper center", ncol=2, frameon=False, fontsize=11, bbox_to_anchor=(0.5, 0.97))
 
-    fig.suptitle("Sound Toll Network: Pre- vs Post-Plague (1709) Comparison", fontsize=15, fontweight="bold", y=0.995)
+    _st = suptitle or "Sound Toll Network: Pre- vs Post-Plague (1709) Comparison"
+    fig.suptitle(_st, fontsize=15, fontweight="bold", y=0.995)
 
     if output_path:
         plt.savefig(output_path, dpi=200, bbox_inches="tight", facecolor="white")

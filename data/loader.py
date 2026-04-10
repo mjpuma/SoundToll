@@ -6,6 +6,9 @@ Uses usecols to reduce memory for large files (~300+ MB).
 import pandas as pd
 from pathlib import Path
 
+# Extra columns for commodity analysis
+CARGO_COLUMNS = ["cargo_ids", "ce_ids"]
+
 # Network-relevant columns only (reduces memory)
 NETWORK_COLUMNS = [
     "departure",
@@ -74,4 +77,20 @@ def load_soundtoll(
             chunks.append(chunk)
         return pd.concat(chunks, ignore_index=True)
 
+    return pd.read_csv(path, usecols=cols)
+
+
+def load_soundtoll_with_cargo(
+    path: str | Path,
+    base_columns: list[str] | None = None,
+    usecols: list[str] | None = None,
+) -> pd.DataFrame:
+    """
+    Load Sound Toll CSV with cargo_ids (and ce_ids) for commodity analysis.
+
+    Uses NETWORK_COLUMNS + CARGO_COLUMNS by default.
+    """
+    base = base_columns or NETWORK_COLUMNS
+    extra = [c for c in CARGO_COLUMNS if c not in base]
+    cols = base + extra if usecols is None else usecols
     return pd.read_csv(path, usecols=cols)
