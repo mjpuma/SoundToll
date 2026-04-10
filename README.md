@@ -58,6 +58,20 @@ python main.py
 
 Optional flags: `--commodity`, `--commodity-only`, `--force` (see `main.py` docstring).
 
+### Network analysis only (library-style)
+
+`main.py` is a **batch driver** (many figures, year-by-year maps, regression exports). If someone only needs **graphs and metrics** to use in their own scripts or paper, the important surface is:
+
+| Purpose | Module(s) |
+|--------|-----------|
+| Load CSV, select columns | `data/loader.py` — `load_soundtoll` |
+| Year / radii / region filters | `filters/filter.py` — `filter_data` |
+| Build graphs, centrality, periods, backbone | `network/analysis.py` — e.g. `build_graph`, `compute_metrics`, `build_graphs_by_period`, `build_backbone_graph` |
+| Maps (optional) | `viz/map.py` — needs **Cartopy** |
+| Abstract network plot (optional) | `viz/network_plot.py` — matplotlib + networkx |
+
+They can ignore `main.py`, `data/regression_panel.py`, `viz/regression_plots.py`, and the commodity helpers unless they need those features. Core numeric deps: **pandas**, **networkx**, **numpy**; **matplotlib** for any plotting; **cartopy** only for geographic maps.
+
 ## Outputs
 
 | Output | Description |
