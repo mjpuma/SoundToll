@@ -58,6 +58,8 @@ python main.py
 
 Optional flags: `--commodity`, `--commodity-only`, `--force` (see `main.py` docstring).
 
+**SEA / time-series exports:** Running `main.py` also writes `outputs/sea/network_timeseries_year_all_goods.csv` and `network_timeseries_year_season_all_goods.csv` (all goods aggregated, not split by commodity), and copies `NETWORK_METRICS_DEFINITIONS.md` into `outputs/sea/`. To generate only those files (faster), run `python export_sea_network_timeseries.py` (see script for `--year-min` / `--year-max`).
+
 ## Network analysis only (library-style)
 
 `main.py` is a **batch driver** (many figures, year-by-year maps, regression exports). If someone only needs **graphs and metrics** to use in their own scripts or paper, the important surface is:

@@ -10,6 +10,7 @@ Use --commodity to also run commodity-by-commodity network analysis
 
 import argparse
 import re
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -26,6 +27,7 @@ from data.regression_panel import (
     build_port_year_panel,
     build_port_year_season_panel,
     build_route_year_panel,
+    export_sea_network_timeseries_csvs,
 )
 from filters.filter import filter_data
 from network.analysis import (
@@ -599,6 +601,21 @@ def main():
     )
     network_summary.to_csv(outputs_dir / "regression_network_year_season.csv", index=False)
     print(f"  Network year-season summary: {len(network_summary):,} rows -> regression_network_year_season.csv")
+
+    sea_dir = outputs_dir / "sea"
+    sea_y, sea_ys = export_sea_network_timeseries_csvs(
+        df_filtered,
+        sea_dir,
+        year_min=year_min,
+        year_max=year_max,
+        min_passages_year=5,
+        min_passages_season=1,
+    )
+    print(f"  SEA time series: {sea_y.name}, {sea_ys.name} -> {sea_dir}")
+    defs_doc = base / "NETWORK_METRICS_DEFINITIONS.md"
+    if defs_doc.exists():
+        shutil.copy2(defs_doc, sea_dir / defs_doc.name)
+        print(f"  Copied {defs_doc.name} to {sea_dir}")
 
     plot_all_regression_outputs(
         outputs_dir,
