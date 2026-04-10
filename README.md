@@ -58,7 +58,7 @@ python main.py
 
 Optional flags: `--commodity`, `--commodity-only`, `--force` (see `main.py` docstring).
 
-### Network analysis only (library-style)
+## Network analysis only (library-style)
 
 `main.py` is a **batch driver** (many figures, year-by-year maps, regression exports). If someone only needs **graphs and metrics** to use in their own scripts or paper, the important surface is:
 
